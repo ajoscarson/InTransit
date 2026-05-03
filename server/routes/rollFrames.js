@@ -36,7 +36,7 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const { roll_id, frame_number, aperture, shutter_speed, notes, location_id } = req.body;
+    const { roll_id, frame_number, aperture, shutter_speed, notes, location_id, metered_aperture, metered_shutter } = req.body;
 
     try {
       const { rowCount } = await pool.query(
@@ -46,12 +46,12 @@ router.post(
       if (rowCount === 0) return res.status(404).json({ error: 'Roll not found' });
 
       const { rows } = await pool.query(
-        `INSERT INTO roll_frames (roll_id, frame_number, aperture, shutter_speed, notes, location_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO roll_frames (roll_id, frame_number, aperture, shutter_speed, notes, location_id, metered_aperture, metered_shutter)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (roll_id, frame_number)
-         DO UPDATE SET aperture = $3, shutter_speed = $4, notes = $5, location_id = $6
+         DO UPDATE SET aperture = $3, shutter_speed = $4, notes = $5, location_id = $6, metered_aperture = $7, metered_shutter = $8
          RETURNING *`,
-        [roll_id, frame_number, aperture || null, shutter_speed || null, notes || null, location_id || null]
+        [roll_id, frame_number, aperture || null, shutter_speed || null, notes || null, location_id || null, metered_aperture || null, metered_shutter || null]
       );
       res.status(201).json(rows[0]);
     } catch (err) {

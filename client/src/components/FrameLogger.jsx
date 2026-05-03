@@ -46,10 +46,12 @@ export default function FrameLogger({ rollId, locations = [] }) {
     ? Math.max(...frames.map((f) => f.frame_number)) + 1
     : 1;
 
-  const [frameNum, setFrameNum]         = useState('');
-  const [aperture, setAperture]         = useState('');
-  const [shutter, setShutter]           = useState('');
-  const [notes, setNotes]               = useState('');
+  const [frameNum, setFrameNum]               = useState('');
+  const [aperture, setAperture]               = useState('');
+  const [shutter, setShutter]                 = useState('');
+  const [meteredAperture, setMeteredAperture] = useState('');
+  const [meteredShutter, setMeteredShutter]   = useState('');
+  const [notes, setNotes]                     = useState('');
   const [locationId, setLocationId]     = useState('');
   const [newLocationText, setNewLocationText] = useState('');
   const [saving, setSaving]             = useState(false);
@@ -65,6 +67,8 @@ export default function FrameLogger({ rollId, locations = [] }) {
     setFrameNum(String(nextFrame));
     setAperture('');
     setShutter('');
+    setMeteredAperture('');
+    setMeteredShutter('');
     setNotes('');
     setLocationId('');
     setNewLocationText('');
@@ -101,6 +105,8 @@ export default function FrameLogger({ rollId, locations = [] }) {
         frame_number: Number(frameNum),
         aperture: aperture || undefined,
         shutter_speed: shutter || undefined,
+        metered_aperture: meteredAperture || undefined,
+        metered_shutter: meteredShutter || undefined,
         notes: notes.trim() || undefined,
         location_id: resolvedLocationId,
       });
@@ -108,6 +114,8 @@ export default function FrameLogger({ rollId, locations = [] }) {
       setFrameNum(String(Number(frameNum) + 1));
       setAperture('');
       setShutter('');
+      setMeteredAperture('');
+      setMeteredShutter('');
       setNotes('');
       setLocationId('');
       setNewLocationText('');
@@ -172,13 +180,23 @@ export default function FrameLogger({ rollId, locations = [] }) {
           </div>
 
           <div style={{ marginBottom: '0.5rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture</label>
+            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Shot</label>
             <QuickPicker options={APERTURES} value={aperture} onChange={setAperture} />
           </div>
 
           <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter</label>
+            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Shot</label>
             <QuickPicker options={SHUTTERS} value={shutter} onChange={setShutter} />
+          </div>
+
+          <div style={{ marginBottom: '0.5rem' }}>
+            <label style={{ fontSize: '0.65rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Metered</label>
+            <QuickPicker options={APERTURES} value={meteredAperture} onChange={setMeteredAperture} />
+          </div>
+
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontSize: '0.65rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Metered</label>
+            <QuickPicker options={SHUTTERS} value={meteredShutter} onChange={setMeteredShutter} />
           </div>
 
           <div style={{ marginBottom: '0.75rem' }}>
@@ -245,6 +263,11 @@ export default function FrameLogger({ rollId, locations = [] }) {
                   {(frame.aperture || frame.shutter_speed) && (
                     <span style={{ fontSize: '0.72rem', fontFamily: 'ui-monospace, monospace', color: '#666', marginRight: '0.5rem' }}>
                       {[frame.aperture, frame.shutter_speed].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
+                  {(frame.metered_aperture || frame.metered_shutter) && (
+                    <span style={{ fontSize: '0.68rem', fontFamily: 'ui-monospace, monospace', color: '#3a3a3a', marginRight: '0.5rem' }}>
+                      m: {[frame.metered_aperture, frame.metered_shutter].filter(Boolean).join(' · ')}
                     </span>
                   )}
                   {frame.location_name && (
