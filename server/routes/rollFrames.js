@@ -63,18 +63,20 @@ router.post(
 
 // PUT /api/roll-frames/:id
 router.put('/:id', async (req, res) => {
-  const { aperture, shutter_speed, notes, location_id } = req.body;
+  const { aperture, shutter_speed, notes, location_id, metered_aperture, metered_shutter } = req.body;
   try {
     const { rows } = await pool.query(
       `UPDATE roll_frames rf SET
-         aperture      = COALESCE($1, rf.aperture),
-         shutter_speed = COALESCE($2, rf.shutter_speed),
-         notes         = COALESCE($3, rf.notes),
-         location_id   = $4
+         aperture          = $1,
+         shutter_speed     = $2,
+         notes             = $3,
+         location_id       = $4,
+         metered_aperture  = $5,
+         metered_shutter   = $6
        FROM rolls r
-       WHERE rf.id = $5 AND rf.roll_id = r.id AND r.user_id = $6
+       WHERE rf.id = $7 AND rf.roll_id = r.id AND r.user_id = $8
        RETURNING rf.*`,
-      [aperture || null, shutter_speed || null, notes || null, location_id || null, req.params.id, req.user.id]
+      [aperture || null, shutter_speed || null, notes || null, location_id || null, metered_aperture || null, metered_shutter || null, req.params.id, req.user.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Frame not found' });
     res.json(rows[0]);

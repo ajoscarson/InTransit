@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react';
 import api from '../lib/api';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -58,6 +58,13 @@ export default function FrameLogger({ rollId, locations = [] }) {
   const [error, setError]               = useState('');
   const [expanded, setExpanded]         = useState(null);
   const [showForm, setShowForm]         = useState(false);
+  const [editingId, setEditingId]       = useState(null);
+  const [editAperture, setEditAperture] = useState('');
+  const [editShutter, setEditShutter]   = useState('');
+  const [editMeteredAperture, setEditMeteredAperture] = useState('');
+  const [editMeteredShutter, setEditMeteredShutter]   = useState('');
+  const [editNotes, setEditNotes]       = useState('');
+  const [editSaving, setEditSaving]     = useState(false);
 
   // Keep a live-updated list including any locations added mid-session
   const [localLocations, setLocalLocations] = useState(locations);
@@ -123,6 +130,34 @@ export default function FrameLogger({ rollId, locations = [] }) {
       setError(err.response?.data?.error || 'Failed to save frame');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function openEdit(frame) {
+    setEditingId(frame.id);
+    setEditAperture(frame.aperture || '');
+    setEditShutter(frame.shutter_speed || '');
+    setEditMeteredAperture(frame.metered_aperture || '');
+    setEditMeteredShutter(frame.metered_shutter || '');
+    setEditNotes(frame.notes || '');
+  }
+
+  async function handleUpdate(frameId) {
+    setEditSaving(true);
+    try {
+      await api.put(`/api/roll-frames/${frameId}`, {
+        aperture: editAperture || null,
+        shutter_speed: editShutter || null,
+        metered_aperture: editMeteredAperture || null,
+        metered_shutter: editMeteredShutter || null,
+        notes: editNotes.trim() || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ['roll-frames', rollId] });
+      setEditingId(null);
+    } catch {
+      // ignore
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -248,60 +283,107 @@ export default function FrameLogger({ rollId, locations = [] }) {
               key={frame.id}
               style={{ borderBottom: '1px solid #1a1a1a', paddingBottom: '0.6rem', marginBottom: '0.6rem' }}
             >
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
-                <span style={{
-                  fontFamily: 'ui-monospace, monospace',
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  color: '#e8d5b0',
-                  minWidth: 28,
-                }}>
-                  {frame.frame_number}
-                </span>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {(frame.aperture || frame.shutter_speed) && (
-                    <span style={{ fontSize: '0.72rem', fontFamily: 'ui-monospace, monospace', color: '#666', marginRight: '0.5rem' }}>
-                      {[frame.aperture, frame.shutter_speed].filter(Boolean).join(' · ')}
+              {editingId === frame.id ? (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.9rem', fontWeight: 700, color: '#e8d5b0' }}>
+                      {frame.frame_number}
                     </span>
-                  )}
-                  {(frame.metered_aperture || frame.metered_shutter) && (
-                    <span style={{ fontSize: '0.68rem', fontFamily: 'ui-monospace, monospace', color: '#3a3a3a', marginRight: '0.5rem' }}>
-                      m: {[frame.metered_aperture, frame.metered_shutter].filter(Boolean).join(' · ')}
-                    </span>
-                  )}
-                  {frame.location_name && (
-                    <span style={{ fontSize: '0.7rem', color: '#c4a96a' }}>{frame.location_name}</span>
-                  )}
-                  {frame.notes && (
-                    <p style={{
-                      fontSize: '0.82rem',
-                      color: '#ccc',
-                      marginTop: '0.15rem',
-                      lineHeight: 1.4,
-                      overflow: expanded === frame.id ? 'visible' : 'hidden',
-                      whiteSpace: expanded === frame.id ? 'normal' : 'nowrap',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {frame.notes}
-                    </p>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                  {frame.notes && frame.notes.length > 40 && (
-                    <button
-                      onClick={() => setExpanded(expanded === frame.id ? null : frame.id)}
-                      style={{ color: '#444', cursor: 'pointer', background: 'none', border: 'none', display: 'flex' }}
-                    >
-                      {expanded === frame.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    <button onClick={() => setEditingId(null)} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'flex' }}>
+                      <X size={14} />
                     </button>
-                  )}
-                  <button onClick={() => handleDelete(frame.id)} style={{ color: '#333', cursor: 'pointer', background: 'none', border: 'none', display: 'flex' }}>
-                    <Trash2 size={12} />
+                  </div>
+                  <div style={{ marginBottom: '0.4rem' }}>
+                    <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Shot</label>
+                    <QuickPicker options={APERTURES} value={editAperture} onChange={setEditAperture} />
+                  </div>
+                  <div style={{ marginBottom: '0.4rem' }}>
+                    <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Shot</label>
+                    <QuickPicker options={SHUTTERS} value={editShutter} onChange={setEditShutter} />
+                  </div>
+                  <div style={{ marginBottom: '0.4rem' }}>
+                    <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Metered</label>
+                    <QuickPicker options={APERTURES} value={editMeteredAperture} onChange={setEditMeteredAperture} />
+                  </div>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Metered</label>
+                    <QuickPicker options={SHUTTERS} value={editMeteredShutter} onChange={setEditMeteredShutter} />
+                  </div>
+                  <textarea
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="Notes..."
+                    rows={2}
+                    style={{ resize: 'none', fontSize: '0.875rem', marginBottom: '0.5rem' }}
+                  />
+                  <button
+                    onClick={() => handleUpdate(frame.id)}
+                    disabled={editSaving}
+                    className="btn btn-primary btn-full"
+                    style={{ height: 36, fontSize: '0.8rem' }}
+                  >
+                    {editSaving ? <LoadingSpinner size={14} /> : 'Save'}
                   </button>
                 </div>
-              </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+                  <span style={{
+                    fontFamily: 'ui-monospace, monospace',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    color: '#e8d5b0',
+                    minWidth: 28,
+                  }}>
+                    {frame.frame_number}
+                  </span>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {(frame.aperture || frame.shutter_speed) && (
+                      <span style={{ fontSize: '0.72rem', fontFamily: 'ui-monospace, monospace', color: '#666', marginRight: '0.5rem' }}>
+                        {[frame.aperture, frame.shutter_speed].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
+                    {(frame.metered_aperture || frame.metered_shutter) && (
+                      <span style={{ fontSize: '0.68rem', fontFamily: 'ui-monospace, monospace', color: '#3a3a3a', marginRight: '0.5rem' }}>
+                        m: {[frame.metered_aperture, frame.metered_shutter].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
+                    {frame.location_name && (
+                      <span style={{ fontSize: '0.7rem', color: '#c4a96a' }}>{frame.location_name}</span>
+                    )}
+                    {frame.notes && (
+                      <p style={{
+                        fontSize: '0.82rem',
+                        color: '#ccc',
+                        marginTop: '0.15rem',
+                        lineHeight: 1.4,
+                        overflow: expanded === frame.id ? 'visible' : 'hidden',
+                        whiteSpace: expanded === frame.id ? 'normal' : 'nowrap',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {frame.notes}
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                    {frame.notes && frame.notes.length > 40 && (
+                      <button
+                        onClick={() => setExpanded(expanded === frame.id ? null : frame.id)}
+                        style={{ color: '#444', cursor: 'pointer', background: 'none', border: 'none', display: 'flex' }}
+                      >
+                        {expanded === frame.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      </button>
+                    )}
+                    <button onClick={() => openEdit(frame)} style={{ color: '#444', cursor: 'pointer', background: 'none', border: 'none', display: 'flex' }}>
+                      <Pencil size={12} />
+                    </button>
+                    <button onClick={() => handleDelete(frame.id)} style={{ color: '#333', cursor: 'pointer', background: 'none', border: 'none', display: 'flex' }}>
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
