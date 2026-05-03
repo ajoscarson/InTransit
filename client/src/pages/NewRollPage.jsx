@@ -182,9 +182,109 @@ export default function NewRollPage() {
           </div>
         )}
 
+        {/* Camera */}
+        <div className="form-field">
+          <label>Camera</label>
+          {!showAddCamera ? (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select
+                value={cameraId}
+                onChange={(e) => {
+                  const newId = e.target.value;
+                  const newCam = cameras.find((c) => c.id === newId);
+                  const oldCam = cameras.find((c) => c.id === cameraId);
+                  if (newCam?.format !== oldCam?.format) {
+                    setFilmStockId('');
+                    setFilmSearch('');
+                  }
+                  setCameraId(newId);
+                  if (newCam) setFramesShot(FORMAT_DEFAULT_FRAMES[newCam.format] ?? 36);
+                }}
+                style={{ flex: 1 }}
+              >
+                <option value="">— Select camera —</option>
+                {cameras.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.format})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowAddCamera(true)}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 8,
+                  background: '#1e1e1e',
+                  border: '1px solid #2a2a2a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#888',
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+          ) : (
+            <div
+              style={{
+                background: '#141414',
+                border: '1px solid #2a2a2a',
+                borderRadius: 8,
+                padding: '0.75rem',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 600 }}>Add Camera</span>
+                <button type="button" onClick={() => setShowAddCamera(false)}>
+                  <X size={16} color="#666" />
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="Camera name (e.g. Canon AE-1)"
+                value={newCameraName}
+                onChange={(e) => setNewCameraName(e.target.value)}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select
+                  value={newCameraFormat}
+                  onChange={(e) => setNewCameraFormat(e.target.value)}
+                  style={{ flex: 1 }}
+                >
+                  {FORMAT_OPTIONS.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddCamera}
+                  disabled={addingCamera || !newCameraName.trim()}
+                  className="btn btn-primary"
+                  style={{ padding: '0 1rem', height: 44 }}
+                >
+                  {addingCamera ? <LoadingSpinner size={16} /> : 'Add'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Film Stock */}
         <div className="form-field">
-          <label>Film Stock</label>
+          <label>
+            Film Stock
+            {cameraId && cameras.find(c => c.id === cameraId) && (
+              <span style={{ color: '#444', fontWeight: 400, marginLeft: '0.5rem', fontSize: '0.65rem', textTransform: 'none', letterSpacing: 0 }}>
+                {cameras.find(c => c.id === cameraId).format}
+              </span>
+            )}
+          </label>
           {!showAddFilm ? (
             <>
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.35rem' }}>
@@ -323,93 +423,6 @@ export default function NewRollPage() {
                   style={{ padding: '0 1rem', height: 44 }}
                 >
                   {addingFilm ? <LoadingSpinner size={16} /> : 'Add'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Camera */}
-        <div className="form-field">
-          <label>Camera</label>
-          {!showAddCamera ? (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <select
-                value={cameraId}
-                onChange={(e) => {
-                  setCameraId(e.target.value);
-                  const cam = cameras.find((c) => c.id === e.target.value);
-                  if (cam) setFramesShot(FORMAT_DEFAULT_FRAMES[cam.format] ?? 36);
-                }}
-                style={{ flex: 1 }}
-              >
-                <option value="">— Select camera —</option>
-                {cameras.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.format})
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setShowAddCamera(true)}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 8,
-                  background: '#1e1e1e',
-                  border: '1px solid #2a2a2a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#888',
-                  flexShrink: 0,
-                  cursor: 'pointer',
-                }}
-              >
-                <Plus size={18} />
-              </button>
-            </div>
-          ) : (
-            <div
-              style={{
-                background: '#141414',
-                border: '1px solid #2a2a2a',
-                borderRadius: 8,
-                padding: '0.75rem',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 600 }}>Add Camera</span>
-                <button type="button" onClick={() => setShowAddCamera(false)}>
-                  <X size={16} color="#666" />
-                </button>
-              </div>
-              <input
-                type="text"
-                placeholder="Camera name (e.g. Canon AE-1)"
-                value={newCameraName}
-                onChange={(e) => setNewCameraName(e.target.value)}
-                style={{ marginBottom: '0.5rem' }}
-              />
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <select
-                  value={newCameraFormat}
-                  onChange={(e) => setNewCameraFormat(e.target.value)}
-                  style={{ flex: 1 }}
-                >
-                  {FORMAT_OPTIONS.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleAddCamera}
-                  disabled={addingCamera || !newCameraName.trim()}
-                  className="btn btn-primary"
-                  style={{ padding: '0 1rem', height: 44 }}
-                >
-                  {addingCamera ? <LoadingSpinner size={16} /> : 'Add'}
                 </button>
               </div>
             </div>
