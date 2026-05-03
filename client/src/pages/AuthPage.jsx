@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function AuthPage({ mode = 'signin' }) {
-  const [tab, setTab] = useState(mode); // 'signin' | 'signup'
+  const [tab, setTab] = useState(mode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,14 +19,13 @@ export default function AuthPage({ mode = 'signin' }) {
     setError('');
     setSuccessMsg('');
     setLoading(true);
-
     try {
       if (tab === 'signin') {
         await signIn(email, password);
         navigate('/');
       } else {
         await signUp(email, password);
-        setSuccessMsg('Account created! Check your email to confirm, then sign in.');
+        setSuccessMsg('Check your email to confirm your account.');
         setTab('signin');
       }
     } catch (err) {
@@ -44,116 +43,74 @@ export default function AuthPage({ mode = 'signin' }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.5rem',
+        padding: '2rem 1.5rem',
         background: '#0a0a0a',
       }}
     >
-      {/* Logo area */}
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div
+      {/* Wordmark */}
+      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <h1
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 14,
-            background: '#1e1e1e',
-            border: '1px solid #2a2a2a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1rem',
-            fontSize: '1.75rem',
+            fontSize: '1rem',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#f0f0f0',
+            marginBottom: '0.4rem',
           }}
         >
-          🎞
-        </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em', color: '#f0f0f0' }}>
-          Film Roll Tracker
+          In Transit
         </h1>
-        <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.3rem' }}>
-          Track every roll, from shoot to scan
+        <p style={{ color: '#333', fontSize: '0.8rem', letterSpacing: '0.04em' }}>
+          analog film tracker
         </p>
       </div>
 
-      {/* Card */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 360,
-          background: '#141414',
-          border: '1px solid #2a2a2a',
-          borderRadius: 14,
-          padding: '1.75rem',
-        }}
-      >
+      <div style={{ width: '100%', maxWidth: 320 }}>
         {/* Tab toggle */}
         <div
           style={{
             display: 'flex',
-            background: '#0a0a0a',
-            borderRadius: 8,
-            padding: 4,
-            marginBottom: '1.5rem',
+            gap: '1.5rem',
+            borderBottom: '1px solid #1e1e1e',
+            marginBottom: '2rem',
           }}
         >
-          {['signin', 'signup'].map((t) => (
+          {[['signin', 'Sign In'], ['signup', 'Sign Up']].map(([t, label]) => (
             <button
               key={t}
               onClick={() => { setTab(t); setError(''); setSuccessMsg(''); }}
               style={{
-                flex: 1,
-                padding: '0.5rem',
-                borderRadius: 6,
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                transition: 'background 0.15s, color 0.15s',
-                background: tab === t ? '#1e1e1e' : 'transparent',
-                color: tab === t ? '#f0f0f0' : '#666',
-                border: tab === t ? '1px solid #2a2a2a' : '1px solid transparent',
+                padding: '0 0 0.6rem',
+                fontSize: '0.82rem',
+                fontWeight: tab === t ? 600 : 400,
+                color: tab === t ? '#f0f0f0' : '#555',
+                background: 'none',
+                border: 'none',
+                borderBottom: tab === t ? '1px solid #e8d5b0' : '1px solid transparent',
+                marginBottom: '-1px',
                 cursor: 'pointer',
+                transition: 'color 0.15s',
               }}
             >
-              {t === 'signin' ? 'Sign In' : 'Sign Up'}
+              {label}
             </button>
           ))}
         </div>
 
         {error && (
-          <div
-            style={{
-              background: '#dc262620',
-              border: '1px solid #dc262640',
-              borderRadius: 8,
-              padding: '0.65rem 0.875rem',
-              marginBottom: '1rem',
-              color: '#f87171',
-              fontSize: '0.875rem',
-            }}
-          >
-            {error}
-          </div>
+          <p style={{ fontSize: '0.82rem', color: '#f87171', marginBottom: '1rem' }}>{error}</p>
         )}
-
         {successMsg && (
-          <div
-            style={{
-              background: '#10b98120',
-              border: '1px solid #10b98140',
-              borderRadius: 8,
-              padding: '0.65rem 0.875rem',
-              marginBottom: '1rem',
-              color: '#10b981',
-              fontSize: '0.875rem',
-            }}
-          >
-            {successMsg}
-          </div>
+          <p style={{ fontSize: '0.82rem', color: '#10b981', marginBottom: '1rem' }}>{successMsg}</p>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-field">
-            <label htmlFor="email">Email</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '0.4rem' }}>
+              Email
+            </label>
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -163,14 +120,15 @@ export default function AuthPage({ mode = 'signin' }) {
             />
           </div>
 
-          <div className="form-field">
-            <label htmlFor="password">Password</label>
+          <div>
+            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '0.4rem' }}>
+              Password
+            </label>
             <input
-              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={tab === 'signup' ? 'Min 6 characters' : '••••••••'}
+              placeholder="••••••••"
               autoComplete={tab === 'signin' ? 'current-password' : 'new-password'}
               minLength={6}
               required
