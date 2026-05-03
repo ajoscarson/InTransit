@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, PlusCircle, Camera, Settings } from 'lucide-react';
+import { Home, PlusCircle, BarChart2, Camera, Settings } from 'lucide-react';
 
 const TABS = [
   { label: 'Home',     icon: Home,        path: '/' },
   { label: 'New Roll', icon: PlusCircle,  path: '/rolls/new' },
+  { label: 'Stats',    icon: BarChart2,   path: '/stats' },
   { label: 'Cameras',  icon: Camera,      path: '/cameras' },
   { label: 'Settings', icon: Settings,    path: '/settings' },
 ];

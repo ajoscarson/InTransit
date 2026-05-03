@@ -9,6 +9,7 @@ import NewRollPage from './pages/NewRollPage';
 import RollDetailPage from './pages/RollDetailPage';
 import CamerasPage from './pages/CamerasPage';
 import SettingsPage from './pages/SettingsPage';
+import StatsPage from './pages/StatsPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -49,6 +50,9 @@ export default function App() {
       } />
       <Route path="/settings" element={
         <ProtectedRoute><SettingsPage /></ProtectedRoute>
+      } />
+      <Route path="/stats" element={
+        <ProtectedRoute><StatsPage /></ProtectedRoute>
       } />
 
       <Route path="*" element={<Navigate to="/" replace />} />

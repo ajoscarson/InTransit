@@ -30,6 +30,7 @@ app.use('/api/roll-locations', require('./routes/rollLocations'));
 app.use('/api/roll-frames',    require('./routes/rollFrames'));
 app.use('/api/notifications',  require('./routes/notifications'));
 app.use('/api/billing',        require('./routes/billing'));
+app.use('/api/stats',          require('./routes/stats'));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
