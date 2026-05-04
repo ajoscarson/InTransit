@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react';
 import api from '../lib/api';
 import LoadingSpinner from './LoadingSpinner';
+import LightMeter from './LightMeter';
 
 const APERTURES = ['f/1.4','f/1.8','f/2','f/2.8','f/4','f/5.6','f/8','f/11','f/16'];
 const SHUTTERS  = ['1/1000','1/500','1/250','1/125','1/60','1/30','1/15','1/8','1/4','1/2','1s','2s','B'];
@@ -38,7 +39,7 @@ function QuickPicker({ options, value, onChange }) {
   );
 }
 
-export default function FrameLogger({ rollId, locations = [] }) {
+export default function FrameLogger({ rollId, roll, locations = [] }) {
   const queryClient = useQueryClient();
 
   const { data: frames = [], isLoading } = useQuery({
@@ -65,6 +66,7 @@ export default function FrameLogger({ rollId, locations = [] }) {
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showMeter, setShowMeter] = useState(false);
 
   // Edit state
   const [editingId, setEditingId]                   = useState(null);
@@ -263,12 +265,33 @@ export default function FrameLogger({ rollId, locations = [] }) {
           {/* Advanced fields */}
           {showMore && (
             <div style={{ marginBottom: '0.85rem', paddingLeft: '0.75rem', borderLeft: '1px solid #1e1e1e' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Metered Exposure</label>
+                <button
+                  type="button"
+                  onClick={() => setShowMeter(true)}
+                  style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: '#8b5cf6',
+                    background: 'none',
+                    border: '1px solid #2a1f3d',
+                    borderRadius: 4,
+                    padding: '0.2rem 0.55rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Meter
+                </button>
+              </div>
               <div style={{ marginBottom: '0.5rem' }}>
-                <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Aperture — Metered</label>
+                <label style={{ fontSize: '0.6rem', color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Aperture</label>
                 <QuickPicker options={APERTURES} value={meteredAperture} onChange={setMeteredAperture} />
               </div>
               <div style={{ marginBottom: '0.5rem' }}>
-                <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Shutter — Metered</label>
+                <label style={{ fontSize: '0.6rem', color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Shutter</label>
                 <QuickPicker options={SHUTTERS} value={meteredShutter} onChange={setMeteredShutter} />
               </div>
               <div>
@@ -426,6 +449,18 @@ export default function FrameLogger({ rollId, locations = [] }) {
             </div>
           ))}
         </div>
+      )}
+
+      {showMeter && (
+        <LightMeter
+          roll={roll}
+          onConfirm={(aperture, shutter) => {
+            setMeteredAperture(aperture);
+            setMeteredShutter(shutter);
+            setShowMeter(false);
+          }}
+          onClose={() => setShowMeter(false)}
+        />
       )}
     </div>
   );

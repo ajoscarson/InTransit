@@ -506,7 +506,7 @@ export default function RollDetailPage() {
         </div>
 
         {/* Frame logger */}
-        <FrameLogger rollId={id} locations={locations} />
+        <FrameLogger rollId={id} roll={roll} locations={locations} />
 
         {/* Status timeline */}
         <div className="card" style={{ marginBottom: '1rem' }}>

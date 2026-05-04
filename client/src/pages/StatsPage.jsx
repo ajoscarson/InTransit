@@ -262,6 +262,24 @@ export default function StatsPage() {
           )}
         </Section>
 
+        {/* Exposure Profile */}
+        <Section title="Exposure Profile">
+          <div style={{
+            background: '#0d0d0d',
+            border: '1px solid #1a1a1a',
+            borderRadius: 8,
+            padding: '1rem',
+            textAlign: 'center',
+          }}>
+            <p style={{ fontSize: '0.78rem', color: '#333', lineHeight: 1.5 }}>
+              Unlocks after 10 rolls with metered data.
+            </p>
+            <p style={{ fontSize: '0.68rem', color: '#2a2a2a', marginTop: '0.4rem', lineHeight: 1.5 }}>
+              Tracks your deviation from the meter — how you expose relative to what the scene called for.
+            </p>
+          </div>
+        </Section>
+
         {/* Personal Bests */}
         <Section title="Personal Bests">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
