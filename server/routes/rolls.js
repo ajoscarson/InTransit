@@ -67,8 +67,9 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Free tier: max 5 active (non-archived) rolls
-    if (req.user.plan === 'free') {
+    // Free tier: max 5 active (non-archived) rolls (admin is exempt)
+    const ADMIN_EMAIL = 'ajoscarson@gmail.com';
+    if (req.user.plan === 'free' && req.user.email !== ADMIN_EMAIL) {
       const { rows: countRows } = await pool.query(
         `SELECT COUNT(*) AS cnt FROM rolls WHERE user_id = $1 AND status != 'archived'`,
         [req.user.id]
