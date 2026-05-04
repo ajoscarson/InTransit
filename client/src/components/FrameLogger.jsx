@@ -52,10 +52,11 @@ export default function FrameLogger({ rollId, roll, locations = [] }) {
     ? Math.max(...frames.map((f) => f.frame_number)) + 1
     : 1;
 
-  // Restore last-used values from localStorage
   const [frameNum, setFrameNum]   = useState('');
-  const [aperture, setAperture]   = useState(() => localStorage.getItem(LS_APERTURE) || '');
-  const [shutter, setShutter]     = useState(() => localStorage.getItem(LS_SHUTTER) || '');
+  const [aperture, setAperture]   = useState('');
+  const [shutter, setShutter]     = useState('');
+  const [lastAperture, setLastAperture] = useState(() => localStorage.getItem(LS_APERTURE) || '');
+  const [lastShutter, setLastShutter]   = useState(() => localStorage.getItem(LS_SHUTTER) || '');
   const [notes, setNotes]         = useState('');
   const [showMore, setShowMore]   = useState(() => localStorage.getItem(LS_MORE) === 'true');
   const [meteredAperture, setMeteredAperture] = useState('');
@@ -130,12 +131,13 @@ export default function FrameLogger({ rollId, roll, locations = [] }) {
         location_id: resolvedLocationId,
       });
 
-      // Persist last-used aperture/shutter
-      if (aperture) localStorage.setItem(LS_APERTURE, aperture);
-      if (shutter)  localStorage.setItem(LS_SHUTTER, shutter);
+      if (aperture) { localStorage.setItem(LS_APERTURE, aperture); setLastAperture(aperture); }
+      if (shutter)  { localStorage.setItem(LS_SHUTTER, shutter);  setLastShutter(shutter); }
 
       queryClient.invalidateQueries({ queryKey: ['roll-frames', rollId] });
       setFrameNum(String(Number(frameNum) + 1));
+      setAperture('');
+      setShutter('');
       setNotes('');
       setMeteredAperture('');
       setMeteredShutter('');
@@ -228,6 +230,27 @@ export default function FrameLogger({ rollId, roll, locations = [] }) {
               />
             </div>
           </div>
+
+          {/* Same as last */}
+          {(lastAperture || lastShutter) && !aperture && !shutter && (
+            <button
+              type="button"
+              onClick={() => { setAperture(lastAperture); setShutter(lastShutter); }}
+              style={{
+                fontSize: '0.68rem',
+                color: '#666',
+                background: 'none',
+                border: '1px solid #252525',
+                borderRadius: 4,
+                padding: '0.25rem 0.6rem',
+                cursor: 'pointer',
+                marginBottom: '0.75rem',
+                fontFamily: 'ui-monospace, monospace',
+              }}
+            >
+              Same as last: {[lastAperture, lastShutter].filter(Boolean).join(' · ')}
+            </button>
+          )}
 
           {/* Aperture */}
           <div style={{ marginBottom: '0.6rem' }}>
