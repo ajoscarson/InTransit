@@ -184,17 +184,6 @@ export default function NewRollPage() {
           </div>
         )}
 
-        {/* Roll Name */}
-        <div className="form-field">
-          <label>Name <span style={{ color: '#444', fontWeight: 400 }}>(optional)</span></label>
-          <input
-            type="text"
-            placeholder="e.g. Labor Day Camping Trip"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-
         {/* Camera */}
         <div className="form-field">
           <label>Camera</label>
@@ -544,6 +533,17 @@ export default function NewRollPage() {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             style={{ resize: 'none' }}
+          />
+        </div>
+
+        {/* Roll Name */}
+        <div className="form-field">
+          <label>Roll Name <span style={{ color: '#444', fontWeight: 400 }}>(optional)</span></label>
+          <input
+            type="text"
+            placeholder="e.g. Labor Day Camping Trip"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
         </div>
 
