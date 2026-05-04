@@ -294,6 +294,27 @@ export default function FrameLogger({ rollId, roll, locations = [] }) {
                 <label style={{ fontSize: '0.6rem', color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Shutter</label>
                 <QuickPicker options={SHUTTERS} value={meteredShutter} onChange={setMeteredShutter} />
               </div>
+              {(meteredAperture || meteredShutter) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (meteredAperture) setAperture(meteredAperture);
+                    if (meteredShutter) setShutter(meteredShutter);
+                  }}
+                  style={{
+                    fontSize: '0.68rem',
+                    color: '#666',
+                    background: 'none',
+                    border: '1px solid #252525',
+                    borderRadius: 4,
+                    padding: '0.25rem 0.6rem',
+                    cursor: 'pointer',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  Use as shot exposure
+                </button>
+              )}
               <div>
                 <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Location</label>
                 {localLocations.length > 0 ? (
@@ -371,6 +392,27 @@ export default function FrameLogger({ rollId, roll, locations = [] }) {
                     <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Metered</label>
                     <QuickPicker options={SHUTTERS} value={editMeteredShutter} onChange={setEditMeteredShutter} />
                   </div>
+                  {(editMeteredAperture || editMeteredShutter) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editMeteredAperture) setEditAperture(editMeteredAperture);
+                        if (editMeteredShutter) setEditShutter(editMeteredShutter);
+                      }}
+                      style={{
+                        fontSize: '0.68rem',
+                        color: '#666',
+                        background: 'none',
+                        border: '1px solid #252525',
+                        borderRadius: 4,
+                        padding: '0.25rem 0.6rem',
+                        cursor: 'pointer',
+                        marginBottom: '0.5rem',
+                      }}
+                    >
+                      Use as shot exposure
+                    </button>
+                  )}
                   <textarea
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
