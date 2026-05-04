@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import { ChevronLeft, Trash2, ExternalLink, Plus, Check, MapPin, X } from 'lucide-react';
+import { ChevronLeft, Trash2, ExternalLink, Plus, Check, MapPin, X, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { useRolls, useDeleteRoll } from '../hooks/useRolls';
@@ -113,6 +113,8 @@ export default function RollDetailPage() {
   const [addingScan, setAddingScan] = useState(false);
 
   const [error, setError] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
 
   const latestOrder = labOrders[0] || null;
 
@@ -215,6 +217,17 @@ export default function RollDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['roll-locations', id] });
     } catch (err) {
       setError('Failed to delete location');
+    }
+  }
+
+  async function handleSaveName() {
+    try {
+      await api.put(`/api/rolls/${id}`, { name: nameInput.trim() || null });
+      queryClient.invalidateQueries({ queryKey: ['roll-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['rolls'] });
+      setEditingName(false);
+    } catch {
+      setError('Failed to save name');
     }
   }
 
@@ -330,6 +343,11 @@ export default function RollDetailPage() {
             style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             <div style={{ textAlign: 'left' }}>
+              {roll.name && (
+                <p style={{ fontSize: '0.65rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
+                  {roll.name}
+                </p>
+              )}
               <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f0f0f0' }}>
                 {roll.film_stock_name || 'Unknown Film'}
               </h2>
@@ -391,6 +409,37 @@ export default function RollDetailPage() {
                   <p style={{ fontSize: '0.875rem', color: '#d0d0d0', lineHeight: 1.5 }}>{roll.notes}</p>
                 </div>
               )}
+
+              {/* Roll name edit */}
+              <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #1e1e1e' }}>
+                {editingName ? (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                      placeholder="e.g. Labor Day Camping Trip"
+                      style={{ flex: 1, fontSize: '0.875rem' }}
+                    />
+                    <button onClick={handleSaveName} style={{ background: 'none', border: 'none', color: '#e8d5b0', cursor: 'pointer', display: 'flex' }}>
+                      <Check size={16} />
+                    </button>
+                    <button onClick={() => setEditingName(false)} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'flex' }}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setNameInput(roll.name || ''); setEditingName(true); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: '0.75rem', padding: 0 }}
+                  >
+                    <Pencil size={12} />
+                    {roll.name ? 'Edit name' : 'Add a name to this roll'}
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>

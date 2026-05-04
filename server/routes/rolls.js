@@ -81,12 +81,12 @@ router.post(
       }
     }
 
-    const { camera_id, film_stock_id, location, shoot_date, notes, frames_shot, push_pull } = req.body;
+    const { camera_id, film_stock_id, location, shoot_date, notes, frames_shot, push_pull, name } = req.body;
 
     try {
       const { rows } = await pool.query(
-        `INSERT INTO rolls (user_id, camera_id, film_stock_id, location, shoot_date, notes, frames_shot, push_pull)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO rolls (user_id, camera_id, film_stock_id, location, shoot_date, notes, frames_shot, push_pull, name)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
         [
           req.user.id,
@@ -97,6 +97,7 @@ router.post(
           notes || null,
           frames_shot || null,
           push_pull || null,
+          name || null,
         ]
       );
       res.status(201).json(rows[0]);
@@ -122,7 +123,7 @@ router.put(
     }
 
     const { id } = req.params;
-    const { camera_id, film_stock_id, location, shoot_date, notes, frames_shot, push_pull, status } = req.body;
+    const { camera_id, film_stock_id, location, shoot_date, notes, frames_shot, push_pull, status, name } = req.body;
 
     try {
       const { rows } = await pool.query(
@@ -134,8 +135,9 @@ router.put(
            notes         = COALESCE($5, notes),
            frames_shot   = COALESCE($6, frames_shot),
            push_pull     = COALESCE($7, push_pull),
-           status        = COALESCE($8, status)
-         WHERE id = $9 AND user_id = $10
+           status        = COALESCE($8, status),
+           name          = $9
+         WHERE id = $10 AND user_id = $11
          RETURNING *`,
         [
           camera_id || null,
@@ -146,6 +148,7 @@ router.put(
           frames_shot || null,
           push_pull !== undefined ? push_pull : null,
           status || null,
+          name !== undefined ? name : null,
           id,
           req.user.id,
         ]

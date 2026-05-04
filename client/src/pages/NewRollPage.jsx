@@ -22,6 +22,7 @@ export default function NewRollPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
+  const [name, setName] = useState('');
   const [filmStockId, setFilmStockId] = useState('');
   const [filmSearch, setFilmSearch] = useState('');
   const [cameraId, setCameraId] = useState('');
@@ -108,6 +109,7 @@ export default function NewRollPage() {
     setError('');
 
     const payload = {
+      name: name.trim() || undefined,
       film_stock_id: filmStockId || undefined,
       camera_id: cameraId || undefined,
       shoot_date: shootDate,
@@ -181,6 +183,17 @@ export default function NewRollPage() {
             {error}
           </div>
         )}
+
+        {/* Roll Name */}
+        <div className="form-field">
+          <label>Name <span style={{ color: '#444', fontWeight: 400 }}>(optional)</span></label>
+          <input
+            type="text"
+            placeholder="e.g. Labor Day Camping Trip"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
 
         {/* Camera */}
         <div className="form-field">
