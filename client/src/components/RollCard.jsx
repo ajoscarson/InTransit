@@ -38,22 +38,36 @@ export default function RollCard({ roll }) {
       onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.75')}
       onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.3rem' }}>
-        <h3
-          style={{
-            fontSize: '1.05rem',
-            fontWeight: 700,
-            color: '#f0f0f0',
-            letterSpacing: '-0.01em',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          {roll.film_stock_name || 'Unknown Film'}
-        </h3>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.3rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {roll.name && (
+            <p style={{
+              fontSize: '0.62rem',
+              color: '#555',
+              textTransform: 'uppercase',
+              letterSpacing: '0.07em',
+              marginBottom: '0.15rem',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {roll.name}
+            </p>
+          )}
+          <h3
+            style={{
+              fontSize: '1.05rem',
+              fontWeight: 700,
+              color: '#f0f0f0',
+              letterSpacing: '-0.01em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {roll.film_stock_name || 'Unknown Film'}
+          </h3>
+        </div>
         <StatusBadge status={roll.status} />
       </div>
 
