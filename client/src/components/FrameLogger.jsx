@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react';
 import api from '../lib/api';
@@ -7,23 +7,28 @@ import LoadingSpinner from './LoadingSpinner';
 const APERTURES = ['f/1.4','f/1.8','f/2','f/2.8','f/4','f/5.6','f/8','f/11','f/16'];
 const SHUTTERS  = ['1/1000','1/500','1/250','1/125','1/60','1/30','1/15','1/8','1/4','1/2','1s','2s','B'];
 
+const LS_APERTURE = 'fl_last_aperture';
+const LS_SHUTTER  = 'fl_last_shutter';
+const LS_MORE     = 'fl_more_open';
+
 function QuickPicker({ options, value, onChange }) {
   return (
-    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
       {options.map((o) => (
         <button
           key={o}
           type="button"
           onClick={() => onChange(value === o ? '' : o)}
           style={{
-            padding: '0.2rem 0.5rem',
-            fontSize: '0.7rem',
+            padding: '0.35rem 0.6rem',
+            fontSize: '0.78rem',
             fontFamily: 'ui-monospace, monospace',
-            borderRadius: 4,
-            background: value === o ? '#e8d5b0' : '#1e1e1e',
-            color: value === o ? '#1a1208' : '#555',
-            border: `1px solid ${value === o ? '#e8d5b0' : '#2a2a2a'}`,
+            borderRadius: 6,
+            background: value === o ? '#e8d5b0' : '#1a1a1a',
+            color: value === o ? '#1a1208' : '#666',
+            border: `1px solid ${value === o ? '#e8d5b0' : '#252525'}`,
             cursor: 'pointer',
+            minHeight: 36,
           }}
         >
           {o}
@@ -46,37 +51,44 @@ export default function FrameLogger({ rollId, locations = [] }) {
     ? Math.max(...frames.map((f) => f.frame_number)) + 1
     : 1;
 
-  const [frameNum, setFrameNum]               = useState('');
-  const [aperture, setAperture]               = useState('');
-  const [shutter, setShutter]                 = useState('');
+  // Restore last-used values from localStorage
+  const [frameNum, setFrameNum]   = useState('');
+  const [aperture, setAperture]   = useState(() => localStorage.getItem(LS_APERTURE) || '');
+  const [shutter, setShutter]     = useState(() => localStorage.getItem(LS_SHUTTER) || '');
+  const [notes, setNotes]         = useState('');
+  const [showMore, setShowMore]   = useState(() => localStorage.getItem(LS_MORE) === 'true');
   const [meteredAperture, setMeteredAperture] = useState('');
   const [meteredShutter, setMeteredShutter]   = useState('');
-  const [notes, setNotes]                     = useState('');
-  const [locationId, setLocationId]     = useState('');
+  const [locationId, setLocationId]           = useState('');
   const [newLocationText, setNewLocationText] = useState('');
-  const [saving, setSaving]             = useState(false);
-  const [error, setError]               = useState('');
-  const [expanded, setExpanded]         = useState(null);
-  const [showForm, setShowForm]         = useState(false);
-  const [editingId, setEditingId]       = useState(null);
-  const [editAperture, setEditAperture] = useState('');
-  const [editShutter, setEditShutter]   = useState('');
+
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState('');
+  const [showForm, setShowForm] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId]                   = useState(null);
+  const [editAperture, setEditAperture]             = useState('');
+  const [editShutter, setEditShutter]               = useState('');
   const [editMeteredAperture, setEditMeteredAperture] = useState('');
   const [editMeteredShutter, setEditMeteredShutter]   = useState('');
-  const [editNotes, setEditNotes]       = useState('');
-  const [editSaving, setEditSaving]     = useState(false);
+  const [editNotes, setEditNotes]                   = useState('');
+  const [editSaving, setEditSaving]                 = useState(false);
+  const [expanded, setExpanded]                     = useState(null);
 
-  // Keep a live-updated list including any locations added mid-session
   const [localLocations, setLocalLocations] = useState(locations);
-  React.useEffect(() => { setLocalLocations(locations); }, [locations]);
+  useEffect(() => { setLocalLocations(locations); }, [locations]);
+
+  // Persist more toggle
+  useEffect(() => {
+    localStorage.setItem(LS_MORE, String(showMore));
+  }, [showMore]);
 
   function openForm() {
     setFrameNum(String(nextFrame));
-    setAperture('');
-    setShutter('');
+    setNotes('');
     setMeteredAperture('');
     setMeteredShutter('');
-    setNotes('');
     setLocationId('');
     setNewLocationText('');
     setShowForm(true);
@@ -89,8 +101,6 @@ export default function FrameLogger({ rollId, locations = [] }) {
     setError('');
 
     let resolvedLocationId = locationId || undefined;
-
-    // Create new location on the fly if typed
     if (newLocationText.trim()) {
       try {
         const { data: newLoc } = await api.post('/api/roll-locations', {
@@ -102,7 +112,7 @@ export default function FrameLogger({ rollId, locations = [] }) {
         queryClient.invalidateQueries({ queryKey: ['roll-locations', rollId] });
         setNewLocationText('');
       } catch {
-        // location creation failed — proceed without it
+        // proceed without location
       }
     }
 
@@ -117,15 +127,17 @@ export default function FrameLogger({ rollId, locations = [] }) {
         notes: notes.trim() || undefined,
         location_id: resolvedLocationId,
       });
+
+      // Persist last-used aperture/shutter
+      if (aperture) localStorage.setItem(LS_APERTURE, aperture);
+      if (shutter)  localStorage.setItem(LS_SHUTTER, shutter);
+
       queryClient.invalidateQueries({ queryKey: ['roll-frames', rollId] });
       setFrameNum(String(Number(frameNum) + 1));
-      setAperture('');
-      setShutter('');
+      setNotes('');
       setMeteredAperture('');
       setMeteredShutter('');
-      setNotes('');
       setLocationId('');
-      setNewLocationText('');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save frame');
     } finally {
@@ -185,27 +197,28 @@ export default function FrameLogger({ rollId, locations = [] }) {
         </button>
       </div>
 
-      {/* Add frame form */}
+      {/* Log form */}
       {showForm && (
         <form onSubmit={handleSave} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #1e1e1e' }}>
           {error && <p style={{ fontSize: '0.8rem', color: '#f87171', marginBottom: '0.5rem' }}>{error}</p>}
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <div style={{ width: 64, flexShrink: 0 }}>
-              <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.3rem' }}>Frame</label>
+          {/* Frame + Notes row */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
+            <div style={{ width: 60, flexShrink: 0 }}>
+              <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Frame</label>
               <input
                 type="number"
                 min={1}
                 value={frameNum}
                 onChange={(e) => setFrameNum(e.target.value)}
-                style={{ fontFamily: 'ui-monospace, monospace', fontSize: '1.1rem', fontWeight: 700, textAlign: 'center', padding: '0.5rem', height: '100%' }}
+                style={{ fontFamily: 'ui-monospace, monospace', fontSize: '1.1rem', fontWeight: 700, textAlign: 'center', padding: '0.5rem 0.25rem' }}
                 autoFocus
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.3rem' }}>Notes</label>
+              <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Notes</label>
               <textarea
-                placeholder="Wide open, backlit, wasn't sure about the exposure..."
+                placeholder="Wide open, backlit, wasn't sure..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
@@ -214,51 +227,77 @@ export default function FrameLogger({ rollId, locations = [] }) {
             </div>
           </div>
 
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Shot</label>
+          {/* Aperture */}
+          <div style={{ marginBottom: '0.6rem' }}>
+            <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Aperture</label>
             <QuickPicker options={APERTURES} value={aperture} onChange={setAperture} />
           </div>
 
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Shot</label>
+          {/* Shutter */}
+          <div style={{ marginBottom: '0.85rem' }}>
+            <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Shutter</label>
             <QuickPicker options={SHUTTERS} value={shutter} onChange={setShutter} />
           </div>
 
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Metered</label>
-            <QuickPicker options={APERTURES} value={meteredAperture} onChange={setMeteredAperture} />
-          </div>
+          {/* More toggle */}
+          <button
+            type="button"
+            onClick={() => setShowMore(v => !v)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              fontSize: '0.72rem',
+              color: '#444',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              marginBottom: showMore ? '0.75rem' : '0.85rem',
+            }}
+          >
+            {showMore ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            {showMore ? 'Less' : 'More'}
+          </button>
 
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Metered</label>
-            <QuickPicker options={SHUTTERS} value={meteredShutter} onChange={setMeteredShutter} />
-          </div>
-
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{ fontSize: '0.65rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.3rem' }}>Location</label>
-            {localLocations.length > 0 ? (
-              <select
-                value={locationId}
-                onChange={(e) => { setLocationId(e.target.value); setNewLocationText(''); }}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <option value="">— None —</option>
-                {localLocations.map((l) => (
-                  <option key={l.id} value={l.id}>{l.location}{l.frame_start ? ` (${l.frame_start}–${l.frame_end})` : ''}</option>
-                ))}
-                <option value="__new__">+ New location…</option>
-              </select>
-            ) : null}
-            {(locationId === '__new__' || localLocations.length === 0) && (
-              <input
-                type="text"
-                placeholder="Type a location name"
-                value={newLocationText}
-                onChange={(e) => setNewLocationText(e.target.value)}
-                style={{ marginTop: localLocations.length > 0 ? '0.4rem' : 0, fontSize: '0.85rem' }}
-              />
-            )}
-          </div>
+          {/* Advanced fields */}
+          {showMore && (
+            <div style={{ marginBottom: '0.85rem', paddingLeft: '0.75rem', borderLeft: '1px solid #1e1e1e' }}>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Aperture — Metered</label>
+                <QuickPicker options={APERTURES} value={meteredAperture} onChange={setMeteredAperture} />
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Shutter — Metered</label>
+                <QuickPicker options={SHUTTERS} value={meteredShutter} onChange={setMeteredShutter} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.6rem', color: '#444', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.25rem' }}>Location</label>
+                {localLocations.length > 0 ? (
+                  <select
+                    value={locationId}
+                    onChange={(e) => { setLocationId(e.target.value); setNewLocationText(''); }}
+                    style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}
+                  >
+                    <option value="">— None —</option>
+                    {localLocations.map((l) => (
+                      <option key={l.id} value={l.id}>{l.location}{l.frame_start ? ` (${l.frame_start}–${l.frame_end})` : ''}</option>
+                    ))}
+                    <option value="__new__">+ New location…</option>
+                  </select>
+                ) : null}
+                {(locationId === '__new__' || localLocations.length === 0) && (
+                  <input
+                    type="text"
+                    placeholder="Type a location name"
+                    value={newLocationText}
+                    onChange={(e) => setNewLocationText(e.target.value)}
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"
@@ -294,11 +333,11 @@ export default function FrameLogger({ rollId, locations = [] }) {
                     </button>
                   </div>
                   <div style={{ marginBottom: '0.4rem' }}>
-                    <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture — Shot</label>
+                    <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Aperture</label>
                     <QuickPicker options={APERTURES} value={editAperture} onChange={setEditAperture} />
                   </div>
                   <div style={{ marginBottom: '0.4rem' }}>
-                    <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter — Shot</label>
+                    <label style={{ fontSize: '0.6rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.15rem' }}>Shutter</label>
                     <QuickPicker options={SHUTTERS} value={editShutter} onChange={setEditShutter} />
                   </div>
                   <div style={{ marginBottom: '0.4rem' }}>
